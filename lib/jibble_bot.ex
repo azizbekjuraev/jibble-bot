@@ -2,6 +2,17 @@ defmodule JibbleBot do
   @chromedriver_url "http://localhost:9515"
   @brave_binary "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser"
 
+  def port_connected? (port \\ 9515) do
+    case :gen_tcp.connect(~c"localhost", port, [:binary, active: false], 1000) do
+      {:ok, socket} ->
+        :gen_tcp.close(socket)
+        true
+
+      {:error, _reason} ->
+        false
+    end
+  end
+
   def start_chromedriver do
     Port.open({:spawn, "chromedriver --port=9515"}, [:binary])
     IO.puts("Chrome driver started")
@@ -140,6 +151,9 @@ defmodule JibbleBot do
   end
 
   def clock_in do
+    if port_connected?(9515) do
+      stop_chromedriver()
+    end
     start_chromedriver()
     {:ok, session_id} = login()
     wait(10000)
@@ -154,6 +168,9 @@ defmodule JibbleBot do
   end
 
   def clock_out do
+    if port_connected?(9515) do
+      stop_chromedriver()
+    end
     start_chromedriver()
     {:ok, session_id} = login()
     wait(10000)
